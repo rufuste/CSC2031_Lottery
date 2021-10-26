@@ -1,13 +1,15 @@
 # IMPORTS
+from datetime import datetime
 import logging
 from functools import wraps
 
 from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask_login import current_user
-
+from flask_wtf import FlaskForm, RecaptchaField
+from werkzeug.security import check_password_hash
 from app import db
 from models import User
-from users.forms import RegisterForm
+from users.forms import RegisterForm, LoginForm
 
 # CONFIG
 users_blueprint = Blueprint('users', __name__, template_folder='templates')
@@ -20,10 +22,12 @@ def register():
     # create signup form object
     form = RegisterForm()
 
+
     # if request method is POST or form is valid
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+
         # if this returns a user, then the email already exists in database
+        user = User.query.filter_by(email=form.email.data).first()
 
         # if email already exists redirect user back to signup page with error message so user can try again
         if user:
@@ -36,9 +40,8 @@ def register():
                         lastname=form.lastname.data,
                         phone=form.phone.data,
                         password=form.password.data,
-                        pin_key=form.pin_key.data,
                         role='user')
-
+#pin_key=form.pin_key.data,
         # add the new user to the database
         db.session.add(new_user)
         db.session.commit()
@@ -50,9 +53,21 @@ def register():
 
 
 # view user login
-@users_blueprint.route('/login')
+@users_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template('login.html')
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+
+        user = User.query.filter_by(email=form.email.data).first()
+
+        if not user or not check_password_hash(user.password, form.password.data):
+            flash('Incorrect')
+            return render_template('login.html', form=form)
+        return render_template('index.html')
+    # if no match create appropriate error message based on login attempts
+    return render_template('login.html', form=form)
 
 
 # view user profile
