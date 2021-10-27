@@ -38,20 +38,24 @@ class User(db.Model, UserMixin):
 
     # crypto key for user's lottery draws
     draw_key = db.Column(db.BLOB)
-    # pinkey = db.Column(db.String(100), nullable=False)
+    pin_key = db.Column(db.String(100), nullable=False)
 
     # Define the relationship to Draw
     draws = db.relationship('Draw')
 
-    def __init__(self, email, password, firstname, lastname, phone, role):
+    def __init__(self, email, password, firstname, lastname, phone, role, pin_key):
         self.email = email
         self.password = generate_password_hash(password)
-        # self.pin_key = pin_key
+        self.pin_key = pin_key
         self.firstname = firstname
         self.lastname = lastname
         self.phone = phone
         self.draw_key = base64.urlsafe_b64encode(scrypt(password, str(get_random_bytes(32)), 32, N=2 ** 14, r=8, p=1))
         self.role = role
+
+        self.registered_on = datetime.now()
+        self.last_logged_in = None
+        self.current_logged_in = None
 
 
 class Draw(db.Model):
@@ -83,7 +87,7 @@ def init_db():
     db.drop_all()
     db.create_all()
     new_user = User(email='user1@test.com', password='Password1!',
-                    firstname='Alice', lastname='Jones', phone='0191-123-4567', role='user')
+                    firstname='Alice', lastname='Jones', phone='0191-123-4567', role='user', pin_key='EN3YARJVZDMPEG44Z4MIZU4F4YKKMEIV')
 
     db.session.add(new_user)
     db.session.commit()

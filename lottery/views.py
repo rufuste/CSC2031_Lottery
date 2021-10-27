@@ -4,11 +4,11 @@ import logging
 from flask import Blueprint, render_template, request, flash
 
 from app import db
-from models import Draw
+from models import Draw, User
 
 # CONFIG
 lottery_blueprint = Blueprint('lottery', __name__, template_folder='templates')
-
+user = User.query.first()
 
 # VIEWS
 # view lottery page
