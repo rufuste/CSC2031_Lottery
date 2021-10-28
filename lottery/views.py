@@ -23,9 +23,9 @@ def add_draw():
     for i in range(6):
         submitted_draw += request.form.get('no' + str(i + 1)) + ' '
     submitted_draw.strip()
-
+    if (user.id
     # create a new draw with the form data.
-    new_draw = Draw(user_id=1, draw=submitted_draw, win=False, round=0)  # TODO: update user_id [user_id=1 is a placeholder]
+    new_draw = Draw(user_id=user.id, draw=submitted_draw, win=False, round=0)  # TODO: update user_id [user_id=1 is a placeholder]
 
     # add the new draw to the database
     db.session.add(new_draw)
@@ -40,7 +40,7 @@ def add_draw():
 @lottery_blueprint.route('/view_draws', methods=['POST'])
 def view_draws():
     # get all draws that have not been played [played=0]
-    playable_draws = Draw.query.filter_by(played=False).all()  # TODO: filter playable draws for current user
+    playable_draws = Draw.query.filter_by(played=False, id=user.id).all()  # TODO: filter playable draws for current user
 
     # if playable draws exist
     if len(playable_draws) != 0:
@@ -55,7 +55,7 @@ def view_draws():
 @lottery_blueprint.route('/check_draws', methods=['POST'])
 def check_draws():
     # get played draws
-    played_draws = Draw.query.filter_by(played=True).all()  # TODO: filter played draws for current user
+    played_draws = Draw.query.filter_by(played=True, id=user.id).all()  # TODO: filter played draws for current user
 
     # if played draws exist
     if len(played_draws) != 0:
@@ -70,7 +70,7 @@ def check_draws():
 # delete all played draws
 @lottery_blueprint.route('/play_again', methods=['POST'])
 def play_again():
-    delete_played = Draw.__table__.delete().where(Draw.played)  # TODO: delete played draws for current user only
+    delete_played = Draw.__table__.filter_by(id=user.id).delete().where(Draw.played)  # TODO: delete played draws for current user only
     db.session.execute(delete_played)
     db.session.commit()
 
