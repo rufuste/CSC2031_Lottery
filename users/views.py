@@ -3,15 +3,15 @@ from datetime import datetime
 import logging
 from functools import wraps
 
-import pyotp
 from flask import Blueprint, render_template, flash, redirect, url_for, request, session
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from flask_wtf import FlaskForm, RecaptchaField
 from werkzeug.security import check_password_hash
-from app import db
+from app import db, index
 from lottery.views import lottery
 from models import User
 from users.forms import RegisterForm, LoginForm
+import pyotp
 
 # CONFIG
 users_blueprint = Blueprint('users', __name__, template_folder='templates')
@@ -23,7 +23,7 @@ users_blueprint = Blueprint('users', __name__, template_folder='templates')
 def register():
     # create signup form object
     form = RegisterForm()
-
+    form.pin_key.data = pyotp.random_base32()
     # if request method is POST or form is valid
     if form.validate_on_submit():
 
@@ -37,12 +37,13 @@ def register():
 
         # create a new user with the form data
         new_user = User(email=form.email.data,
+                        password=form.password.data,
                         firstname=form.firstname.data,
                         lastname=form.lastname.data,
                         phone=form.phone.data,
-                        password=form.password.data,
-                        role='user', pin_key=form.pin_key)
-        pin_key = form.pin_key.data,
+                        role='user',
+                        pin_key=form.pin_key.data)
+
         # add the new user to the database
         db.session.add(new_user)
         db.session.commit()
@@ -82,11 +83,13 @@ def login():
                 flash('Please check your login details and try again. 2 login attempts remaining')
             return render_template('login.html', form=form)
 
-        if pyotp.TOTP(user.pin_key).verify(form.pin.data):
+        totp = pyotp.TOTP(user.pin_key)
+        if totp.verify(form.pin.data):
             # if user is verified reset login attempts to 0
             session['logins'] = 0
             login_user(user)
 
+            # Update login information in database
             user.last_logged_in = user.current_logged_in
             user.current_logged_in = datetime.now()
             db.session.add(user)
@@ -94,28 +97,32 @@ def login():
         else:
             flash("You have supplied an invalid 2FA token!", "danger")
             return render_template('login.html', form=form)
-        return lottery()
+        return index()
     return render_template('login.html', form=form)
 
 
 # view user profile
 @users_blueprint.route('/profile')
+@login_required
 def profile():
-    return render_template('profile.html', name="PLACEHOLDER FOR FIRSTNAME")
+    return render_template('profile.html', name=current_user.firstname + " " + current_user.lastname)
 
 
 # view user account
 @users_blueprint.route('/account')
+@login_required
 def account():
     return render_template('account.html',
-                           acc_no="PLACEHOLDER FOR USER ID",
-                           email="PLACEHOLDER FOR USER EMAIL",
-                           firstname="PLACEHOLDER FOR USER FIRSTNAME",
-                           lastname="PLACEHOLDER FOR USER LASTNAME",
-                           phone="PLACEHOLDER FOR USER PHONE")
+                           acc_no=current_user.id,
+                           email=current_user.email,
+                           firstname=current_user.firstname,
+                           lastname=current_user.lastname,
+                           phone=current_user.phone)
 
 
 @users_blueprint.route('/logout')
+# @login_required
 def logout():
+    session['logins'] = 0
     logout_user()
     return redirect(url_for('index'))

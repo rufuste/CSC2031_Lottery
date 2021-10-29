@@ -1,4 +1,5 @@
 import base64
+import copy
 from datetime import datetime
 from Crypto.Protocol.KDF import scrypt
 from Crypto.Random import get_random_bytes
@@ -46,13 +47,12 @@ class User(db.Model, UserMixin):
     def __init__(self, email, password, firstname, lastname, phone, role, pin_key):
         self.email = email
         self.password = generate_password_hash(password)
-        self.pin_key = pin_key
         self.firstname = firstname
         self.lastname = lastname
         self.phone = phone
         self.draw_key = base64.urlsafe_b64encode(scrypt(password, str(get_random_bytes(32)), 32, N=2 ** 14, r=8, p=1))
         self.role = role
-
+        self.pin_key = pin_key
         self.registered_on = datetime.now()
         self.last_logged_in = None
         self.current_logged_in = None
@@ -71,15 +71,16 @@ class Draw(db.Model):
 
     def __init__(self, user_id, draw, win, round, draw_key):
         self.user_id = user_id
-        self.draw = encrypt(draw)
+        self.draw = encrypt(draw, draw_key)
         self.played = False
         self.match = False
         self.win = win
         self.round = round
 
     # Decrypt draw info for checking win
-    def view_draws(self, draw_key):
-        self.draw = decrypt(self.draw, draw_key)
+    def view_draw(self, draw_key):
+        draw_copy = copy.deepcopy(self)
+        return decrypt(draw_copy, draw_key)
 
 
 # Initialises the Database with a test user
@@ -87,7 +88,8 @@ def init_db():
     db.drop_all()
     db.create_all()
     new_user = User(email='user1@test.com', password='Password1!',
-                    firstname='Alice', lastname='Jones', phone='0191-123-4567', role='user', pin_key='EN3YARJVZDMPEG44Z4MIZU4F4YKKMEIV')
+                    firstname='Alice', lastname='Jones', phone='0191-123-4567', role='admin',
+                    pin_key='EN3YARJVZDMPEG44Z4MIZU4F4YKKMEIV')
 
     db.session.add(new_user)
     db.session.commit()

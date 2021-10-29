@@ -1,7 +1,9 @@
 # IMPORTS
+import logging
 import socket
-from flask import Flask, render_template
-from flask_login import LoginManager
+from functools import wraps
+from flask import Flask, render_template, request
+from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 
 # CONFIG
@@ -9,9 +11,29 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lottery.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'LongAndRandomSecretKey'
-
+app.config['SQLALCHEMY_ECHO'] = True
 # initialise database
 db = SQLAlchemy(app)
+
+
+# FUNCTIONS
+def requires_roles(*roles):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if current_user.role not in roles:
+                logging.warning('SECURITY - Unauthorised access attempt [%s, %s, %s, %s]',
+                                current_user.id,
+                                current_user.email,
+                                current_user.role,
+                                request.remote_addr)
+                # Redirect the user to an unauthorised notice!
+                return render_template('403.html')
+            return f(*args, **kwargs)
+
+        return wrapped
+
+    return wrapper
 
 
 # HOME PAGE VIEW
@@ -19,10 +41,12 @@ db = SQLAlchemy(app)
 def index():
     return render_template('index.html')
 
+
 # ERROR PAGE VIEWS
 @app.errorhandler(400)
 def page_forbidden(error):
     return render_template('400.html'), 400
+
 
 @app.errorhandler(403)
 def page_forbidden(error):
@@ -38,9 +62,11 @@ def page_not_found(error):
 def internal_error(error):
     return render_template('500.html'), 500
 
+
 @app.errorhandler(503)
 def internal_error(error):
     return render_template('503.html'), 503
+
 
 if __name__ == "__main__":
     my_host = "127.0.0.1"
@@ -50,16 +76,18 @@ if __name__ == "__main__":
     free_port = free_socket.getsockname()[1]
     free_socket.close()
 
+    # LOG IN
     login_manager = LoginManager()
-    login_manager.login_view = 'users.login'
+    login_manager.login_view = 'users.login'  # redirect page if user unauthenticated
     login_manager.init_app(app)
 
     from models import User
 
-
     @login_manager.user_loader
     def load_user(id):
         return User.query.get(int(id))
+
+
     # BLUEPRINTS
     # import blueprints
     from users.views import users_blueprint
@@ -73,3 +101,17 @@ if __name__ == "__main__":
 
     app.run(host=my_host, port=free_port, debug=True)
 
+
+@app.route('/lottery')
+def lottery():
+    return render_template('lottery.html')
+
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+
+@app.route('/register')
+def register():
+    return render_template('register.html')

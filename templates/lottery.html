@@ -15,7 +15,6 @@
         {% endwith %}
         <h4 class="title is-4">Create Draw</h4>
         <div class="box">
-
             <form method="POST" action="/add_draw">
                 <div class="columns is-multiline is-centered">
                     <div class="column is-one-sixth">
@@ -52,17 +51,17 @@
     <div class="column is-4 is-offset-4">
         <h4 class="title is-4">Playable Draws</h4>
         <div class="box">
-            {% if playable_draws %}
+            #{% if playable_draws %}
                 <div class="field">
 
                     {# render playable draws #}
                     {% for draw in playable_draws %}
                         {# change from draw.draw to draw when adding decryption #}
-                        <p>{{ draw.draw }}</p>
+                        <p>{{ draw }}</p>
                     {% endfor %}
 
                 </div>
-            {% endif %}
+            #{% endif %}
             <form method="POST" action="/view_draws">
                 <div>
                     <button class="button is-info is-centered">View Playable Draws</button>

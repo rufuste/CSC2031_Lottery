@@ -93,7 +93,7 @@
             {% if winning_draw %}
                 <div class="field">
                     <p>Round {{ winning_draw.round }}</p>
-                    <p>{{ winning_draw.draw }}</p>
+                    <p>{{ winning_draw.view_draw(current_user.draw_key) }}</p>
                 </div>
             {% endif %}
             <form method="POST" action="/view_winning_draw">
