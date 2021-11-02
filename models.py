@@ -10,6 +10,7 @@ from app import db
 
 
 def encrypt(data, draw_key):
+    # Encrypts data with given key
     return Fernet(draw_key).encrypt(bytes(data, 'utf-8'))
 
 

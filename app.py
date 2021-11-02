@@ -7,6 +7,8 @@ from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 
 # CONFIG
+from flask_talisman import Talisman
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lottery.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -14,6 +16,7 @@ app.config['SECRET_KEY'] = 'LongAndRandomSecretKey'
 app.config['SQLALCHEMY_ECHO'] = True
 # initialise database
 db = SQLAlchemy(app)
+db.session.expire_on_commit = False
 
 
 # FUNCTIONS
@@ -34,6 +37,21 @@ def requires_roles(*roles):
         return wrapped
 
     return wrapper
+
+
+# SECURITY HEADERS
+talisman = Talisman()
+csp = {
+    'default-src': [
+        '\'self\'',
+        'https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css'
+    ],
+    'script-src': [
+        '\'self\'',
+        '\'unsafe-inline\''
+    ]
+}
+talisman.init_app(app, content_security_policy=csp)
 
 
 # HOME PAGE VIEW
@@ -82,6 +100,7 @@ if __name__ == "__main__":
     login_manager.init_app(app)
 
     from models import User
+
 
     @login_manager.user_loader
     def load_user(id):

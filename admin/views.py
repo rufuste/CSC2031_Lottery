@@ -23,7 +23,7 @@ def admin():
 @login_required
 @requires_roles('admin')
 def view_all_users():
-    return render_template('admin.html', name="PLACEHOLDER FOR FIRSTNAME",
+    return render_template('admin.html', name=current_user.firstname,
                            current_users=User.query.filter_by(role='user').all())
 
 

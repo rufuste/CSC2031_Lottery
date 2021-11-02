@@ -23,7 +23,10 @@ users_blueprint = Blueprint('users', __name__, template_folder='templates')
 def register():
     # create signup form object
     form = RegisterForm()
-    form.pin_key.data = pyotp.random_base32()
+
+    # generate default key:
+        # form.pin_key.data = pyotp.random_base32()
+
     # if request method is POST or form is valid
     if form.validate_on_submit():
 
