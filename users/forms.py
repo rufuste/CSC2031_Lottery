@@ -1,8 +1,9 @@
 import re
-from flask_wtf import FlaskForm, RecaptchaField
+
+from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import Required, Email, Length, EqualTo, ValidationError
 from wtforms.fields.html5 import TelField
+from wtforms.validators import Required, Email, Length, EqualTo, ValidationError
 
 
 # Checks only valid name characters present - no symbols
@@ -28,9 +29,7 @@ class RegisterForm(FlaskForm):
     email = StringField(validators=[Required(), Email()])
     firstname = StringField(validators=[Required(), character_check_name])
     lastname = StringField(validators=[Required(), character_check_name])
-
     phone = TelField(validators=[Required()])
-
     password = PasswordField(validators=[Required(),
                                          Length(min=6, max=12,
                                                 message='Password must be between 6 and 12 characters in length.'),
@@ -60,5 +59,4 @@ class LoginForm(FlaskForm):
     email = StringField(validators=[Required(), Email()])
     password = PasswordField(validators=[Required()])
     pin = StringField(validators=[Required(), Length(min=6, max=6, message='PIN Must be 6 characters long')])
-    recaptcha = RecaptchaField()
     submit = SubmitField()

@@ -75,7 +75,6 @@ def check_draws():
         return render_template('lottery.html', results=decrypted_draws, played=True)
 
     # if no played draws exist [all draw entries have been played therefore wait for next lottery round]
-    # if no played draws exist [all draw entries have been played therefore wait for next lottery round]
     else:
         return lottery()
 

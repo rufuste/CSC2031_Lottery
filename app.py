@@ -5,9 +5,11 @@ from functools import wraps
 from flask import Flask, render_template, request
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
-
+import datetime
 # CONFIG
 from flask_talisman import Talisman
+
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lottery.db'
@@ -18,6 +20,7 @@ app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 db.session.expire_on_commit = False
 
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=1)
 
 # FUNCTIONS
 def requires_roles(*roles):
@@ -44,7 +47,7 @@ talisman = Talisman()
 csp = {
     'default-src': [
         '\'self\'',
-        'https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css'
+        'https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css (Links to an external site.)'
     ],
     'script-src': [
         '\'self\'',
@@ -57,6 +60,7 @@ talisman.init_app(app, content_security_policy=csp)
 # HOME PAGE VIEW
 @app.route('/')
 def index():
+    print(request.headers)
     return render_template('index.html')
 
 

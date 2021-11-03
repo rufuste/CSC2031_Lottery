@@ -15,7 +15,7 @@ def encrypt(data, draw_key):
 
 
 def decrypt(data, draw_key):
-    return Fernet(draw_key).decrypt(data).decode("utf-8")
+    return Fernet(draw_key).decrypt(data).decode('utf-8')
 
 
 class User(db.Model, UserMixin):
@@ -80,7 +80,7 @@ class Draw(db.Model):
 
     # Decrypt draw info for checking win
     def view_draw(self, draw_key):
-        draw_copy = copy.deepcopy(self)
+        draw_copy = bytes(copy.deepcopy(self.draw))
         return decrypt(draw_copy, draw_key)
 
 
